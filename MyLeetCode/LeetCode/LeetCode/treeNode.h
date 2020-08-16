@@ -1,12 +1,5 @@
 #pragma once
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <map>
-#include <set>
-#include <string>
-using namespace std;
-#define NIL -10000000
+#include "common.h"
 struct TreeNode {
     int val;
     TreeNode* left;
