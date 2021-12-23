@@ -1,5 +1,22 @@
 #pragma once
 
+//Chapter 2.4 常数映射为型别
+template<int v>
+struct Int2Type
+{
+	enum {value = v};
+};
+template<typename T, bool isPolymorphic>
+class Int2TypeTest
+{
+private:
+	void doSomethings(T obj, Int2Type<false>) { std::cout << obj << "do something 1" << "\n"; }
+	void doSomethings(T obj, Int2Type<true>) { std::cout << obj << ", do something 2" << "\n"; }
+public:
+	void doSomethings(T obj) { doSomethings(obj, Int2Type<isPolymorphic>); }
+};
+
+
 //Chapter 2.7 编译期间获得可转换性
 template<typename T, typename U>
 class Converstion

@@ -38,8 +38,9 @@ class Child :public Base {
 int main()
 {
 	
-	ub8 ret = setTimeWithSequence(3502828800);
-	std::cout << "ret:" << ret << std::endl;
+	Int2TypeTest<int, true> i2t;
+	i2t.doSomethings(3);
+	
     system("pause");
 	return 0;
 }
