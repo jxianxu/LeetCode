@@ -1,5 +1,8 @@
 #pragma once
 #include "common.h"
+
+const int rootIndex = 1;
+
 template<typename T>
 struct Node
 {
@@ -8,7 +11,7 @@ struct Node
 	T value;
 	T lazy_flag;
 
-	Node() { left = 0; right = 0; value = 0; lazy_flag = 0; }
+	Node() { left = NaN; right = NaN; value = 0; lazy_flag = 0; }
 	T	getValue() { return value; }
 	int getLeft() { return left; }
 	int getRight() { return right; }
@@ -18,6 +21,7 @@ struct Node
 	void setLeft(int l) { left = l; }
 	void setRight(int r) { right = r; }
 	void setLazyFlag(T lazy) { lazy_flag = lazy; }
+	void dumpNode() { cout << "Left=" << left << " Right=" << right << " Value=" << value << " lazy="<<lazy_flag<< endl; }
 };
 template<typename T>
 class SegmentTree
@@ -40,7 +44,8 @@ public:
 	int getIndexedLeftValue(int idx);
 	int getIndexedRightValue(int idx);
 	T getIndexedValue(int idx);
-	T getIndexedLazy(int idx) { return m_tree[i].getLazyFlag(); }
+	T getIndexedLazy(int idx) { return m_tree[idx].getLazyFlag(); }
+	Node<T>& getIndexedNode(int idx);
 	int getLength() { return m_len; };
 	void change(int idx, int k, T y);
 	T search(int idx, int l, int r);
@@ -68,7 +73,8 @@ T SegmentTree<T>::buildTree(vector<T> data, int l, int r, int idx)
 		return data[l];
 	}
 	int mid = (l + r) >> 1;
-	T value += buildTree(data, l,mid,2*idx);
+	T value = 0;
+	value += buildTree(data, l, mid, 2 * idx);
 	value += buildTree(data,mid+1,r,2*idx+1);
 	m_tree[idx].setValue(value);
 	return value;
@@ -82,7 +88,7 @@ SegmentTree<T>::SegmentTree(vector<T> data)
 	{
 		 m_len = 4*data.size()+1;
 		 m_tree = new Node<T>[m_len];
-		 buildTree(data, 0, data.size()-1,0);
+		 buildTree(data, 0, data.size()-1, rootIndex);
 	}
 	else
 	{
@@ -143,7 +149,7 @@ void
 SegmentTree<T>::setIndexedValue(int i, T value)
 {
 	if (i < 0 || i >= m_len)
-		return NaN;
+		return ;
 	m_tree[i].setValue(value);
 }
 template<typename T>
@@ -168,7 +174,7 @@ T
 SegmentTree<T>::getIndexedValue(int i)
 {
 	if (i < 0 || i >= m_len)
-		return NaN;
+		return (T)NaN;
 	return m_tree[i].getValue();
 }
 template<typename T>
@@ -176,12 +182,12 @@ void
 SegmentTree<T>::change(int idx, int k, T y) //idx: trees' index, k: point's index, y: target value
 {
 	//把原始数组中（原始数组，即生成线段树的数组）下标为k的元素的值，加上y， idx 是树中节点的下标
-	int left = getIndexedLeftValue(i);
-	int right = getIndexedRightValue(i);
-	T value = getIndexedValue(i);
+	int left = getIndexedLeftValue(idx);
+	int right = getIndexedRightValue(idx);
+	T value = getIndexedValue(idx);
 	if (left == right)
 	{
-		setIndexedValue(i, value+y);
+		setIndexedValue(idx, value+y);
 		return;
 	}
 	int mid = (left + right) >> 1;
@@ -193,17 +199,17 @@ SegmentTree<T>::change(int idx, int k, T y) //idx: trees' index, k: point's inde
 	{
 		change(2 * idx+1, k, y);
 	}
-	setIndexedValue(i, getIndexedValue(2*idx) + getIndexedValue(2*idx+1));
+	setIndexedValue(idx, getIndexedValue(2*idx) + getIndexedValue(2*idx+1));
 	return ;
 }
 template<typename T>
 T SegmentTree<T>::search(int idx, int l, int r)
 {
-	int left = getIndexedLeftValue(i);
-	int right = getIndexedRightValue(i);
+	int left = getIndexedLeftValue(idx);
+	int right = getIndexedRightValue(idx);
 	T lazy = getIndexedLazy(idx);
-	if (left == l || right == r)
-		return getIndexedValue() + (right - left + 1)* lazy;
+	if (left == l && right == r)
+		return getIndexedValue(idx) + (right - left + 1)* lazy;
 
 	int mid = (left + right) >> 1;
 	if (lazy > 0)
@@ -235,12 +241,12 @@ void SegmentTree<T>::changeSection(int idx, int a, int b, T y)
 	if (left == a && right == b)
 	{
 		int lazy = getIndexedLazy(idx)+y;
-		setIndexedLazy(lazy);
+		setIndexedLazy(idx, lazy);
 		
-		setIndexedValue(sum);
+		setIndexedValue(idx, sum);
 		return;
 	}
-	setIndexedValue(sum);
+	setIndexedValue(idx, sum);
 	int mid = (left + right) >> 1;
 	if (b <= mid)
 	{
@@ -267,12 +273,12 @@ void SegmentTree<T>::singlePointAdding(int k, T y)
 {
 	if (m_len <= 0)
 		return;
-	int left = getIndexedLeftValue(0);
-	int right = getIndexedRightValue(0);
+	int left = getIndexedLeftValue(rootIndex);
+	int right = getIndexedRightValue(rootIndex);
 	if (k < left || k > right)
 		return;
 
-	change(0, k, y);
+	change(rootIndex, k, y);
 		
 }
 template<typename T>
@@ -281,28 +287,28 @@ void SegmentTree<T>::sectionAdding(int a, int b, T y)
 	if (m_len <= 0)
 		return;
 
-	int left = getIndexedLeftValue(0);
-	int right = getIndexedRightValue(0);
+	int left = getIndexedLeftValue(rootIndex);
+	int right = getIndexedRightValue(rootIndex);
 	if (a < left)
 		a = left;
 	if (b > right)
 		b = right;
-	change(0,a,b,y);
+	changeSection(rootIndex,a,b,y);
 }
 template<typename T>
 T SegmentTree<T>::searchSection(int l, int r)
 {
 	if (m_len <= 0)
-		return;
+		return NaN;
 
-	int left = getIndexedLeftValue(0);
-	int right = getIndexedRightValue(0);
-	if (a < left)
-		a = left;
-	if (b > right)
-		b = right;
+	int left = getIndexedLeftValue(rootIndex);
+	int right = getIndexedRightValue(rootIndex);
+	if (l < left)
+		l = left;
+	if (r > right)
+		r = right;
 
-	return search(0, l, r);
+	return search(rootIndex, l, r);
 }
 template<typename T>
 void SegmentTree<T>::lazyPushDown(int idx)
@@ -312,10 +318,31 @@ void SegmentTree<T>::lazyPushDown(int idx)
 	int v = getIndexedValue(idx);
 	int lazy = getIndexedLazy(idx);
 	setIndexedValue(idx, v+(r-l+1)*lazy);
-	setIndexedLazy(0);
+	setIndexedLazy(idx,0);
 
 	T llazy = getIndexedLazy(idx << 1);
 	T rlazy = getIndexedLazy(idx << 1 | 1);
 	setIndexedLazy(idx << 1, llazy+lazy);
 	setIndexedLazy(idx << 1 | 1, rlazy+lazy);
+}
+
+template<typename T>
+Node<T>& SegmentTree<T>::getIndexedNode(int idx)
+{
+	return m_tree[idx];
+}
+template <typename T>
+void dumpSegTree(SegmentTree<T>& tree)
+{
+	int len = tree.getLength();
+	for (int i = 1; i < len; i++)
+	{
+		if (tree.getIndexedRightValue(i) != NaN)
+		{
+			cout << i << " --> ";
+			auto node = tree.getIndexedNode(i);
+			node.dumpNode();
+			cout << endl;
+		}
+	}
 }
