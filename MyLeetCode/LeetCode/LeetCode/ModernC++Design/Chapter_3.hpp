@@ -212,5 +212,29 @@
 	//int x = Field<0>(info)._value;
 
 	//3.13.3 产生线性继承体系
+	template<typename T, typename Base>
+	class EventHandler : public Base
+	{
+	public:
+		virtual void OnEvent(T& obj, int eventId) {}
+	};
+
+	template<typename TList, template<typename AtomicType, typename Base> class Unit, class Root=EmptyType>
+	class GenLinearHierachy;
+
+	//specialization
+	template<typename Head, typename Tail, template<typename AtomicType, typename Base> class Unit, class Root = EmptyType>
+	class GenLinearHierachy<TypeList<Head, Tail>, Unit, Root>
+		: public Unit<Head, GenLinearHierachy<Tail, Unit, Root>>
+	{};
+
+	template<typename T, template<class, class> class Unit, typename Root>
+	class GenLinearHierachy<TYPE_LIST_1(T), Unit, Root>
+		: public Unit<T, Root>
+	{};
+	//typedef GenLinearHierachy<TYPE_LIST_3(int, float, double), EventHandler> MyEventHandler
+
+
+
 
 //}
